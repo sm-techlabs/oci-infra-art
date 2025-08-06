@@ -1,0 +1,45 @@
+name: Deploy - Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      networking:
+        description: 'Deploy Networking components (e.g., VCN, subnets)'
+        type: boolean
+        required: true
+        default: false
+      compute:
+        description: 'Deploy Compute (VMs)'
+        type: boolean
+        required: true
+        default: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up OCI
+        uses: sm-techlabs/github-actions-toolkit/actions/connect-to-oci@v1
+        with:
+          oci-config-file: ${{ secrets.OCI_CONFIG }}
+          oci-private-key: ${{ secrets.OCI_API_KEY }}
+
+      - name: Deploy Networking
+        if: ${{ inputs.networking == true }}
+        run: |
+          cd $GITHUB_WORKSPACE/terraform/networking
+          terraform init
+          terraform apply --auto-approve \
+            -var 'compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}'
+
+      - name: Deploy Compute
+        if: ${{ inputs.compute == true }}
+        run: |
+          cd $GITHUB_WORKSPACE/terraform/compute
+          echo ${{ secrets.TERRAFORM_TF_VARS }} > terraform.tfvars
+          terraform init
+          terraform apply --auto-approve
