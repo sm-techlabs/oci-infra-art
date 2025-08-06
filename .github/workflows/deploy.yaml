@@ -28,6 +28,9 @@ jobs:
           oci-config-file: ${{ secrets.OCI_CONFIG }}
           oci-private-key: ${{ secrets.OCI_API_KEY }}
 
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
       - name: Deploy Networking
         if: ${{ inputs.networking == true }}
         run: |
