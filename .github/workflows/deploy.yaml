@@ -3,6 +3,14 @@ name: Deploy - Infrastructure
 on:
   workflow_dispatch:
     inputs:
+      action:
+        description: 'Action to perform'
+        type: choice
+        options:
+          - apply
+          - destroy
+        required: true
+        default: apply
       networking:
         description: 'Deploy Networking components (e.g., VCN, subnets)'
         type: boolean
@@ -36,13 +44,18 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/terraform/networking
           terraform init
-          terraform apply --auto-approve \
+          terraform ${{ inputs.action }} --auto-approve \
             -var 'compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}'
+          terraform output subnet_id > $GITHUB_WORKSPACE/terraform/subnet_id.out
 
       - name: Deploy Compute
         if: ${{ inputs.compute == true }}
         run: |
           cd $GITHUB_WORKSPACE/terraform/compute
-          echo ${{ secrets.TERRAFORM_TF_VARS }} > terraform.tfvars
           terraform init
-          terraform apply --auto-approve
+
+          terraform ${{ inputs.action }} --auto-approve \
+            -var 'compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}' \
+            -var 'cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID }}' \
+            -var 'cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN }}' \
+            -var 'subnet_id=$(cat $GITHUB_WORKSPACE/terraform/subnet_id.out)'

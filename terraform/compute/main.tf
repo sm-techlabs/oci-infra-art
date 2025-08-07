@@ -1,15 +1,13 @@
-data "terraform_remote_state" "networking" {
-  backend = "local"
-  config = {
-    path = "../networking/terraform.tfstate"
-  }
-}
-
 data "oci_identity_availability_domains" "ads" {
   compartment_id = var.compartment_ocid
 }
 
-resource "oci_core_instance" "budgeteer" {
+resource "tls_private_key" "ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "oci_core_instance" "vm" {
   for_each = var.environments
 
   availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
@@ -18,7 +16,7 @@ resource "oci_core_instance" "budgeteer" {
   shape               = var.vm_shape
 
   create_vnic_details {
-    subnet_id        = data.terraform_remote_state.networking.outputs.subnet_id
+    subnet_id        = var.subnet_id
     assign_public_ip = true
   }
 
@@ -28,7 +26,7 @@ resource "oci_core_instance" "budgeteer" {
   }
 
   metadata = {
-    ssh_authorized_keys = file(var.ssh_public_key_path)
+    ssh_authorized_keys = tls_private_key.ssh_key.public_key_openssh
     jwt_secret         = random_password.jwt_secret.result
     user_data           = base64encode(templatefile("${path.module}/../scripts/cloud-init.yaml.tpl", {
       git_branch      = "main"
@@ -38,10 +36,6 @@ resource "oci_core_instance" "budgeteer" {
       jwt_secret   = random_password.jwt_secret.result
     }))
   }
-}
-
-output "budgeteer_public_ips" {
-  value = { for k, v in oci_core_instance.budgeteer : k => v.public_ip }
 }
 
 resource "random_password" "jwt_secret" {
@@ -54,7 +48,7 @@ resource "cloudflare_dns_record" "frontend_dns" {
 
   zone_id = var.cloudflare_zone_id
   name    = each.value.frontend_subdomain
-  content   = oci_core_instance.budgeteer[each.key].public_ip
+  content   = oci_core_instance.vm[each.key].public_ip
   type    = "A"
   ttl     = 300
   comment = "Managed by Terraform"
@@ -65,7 +59,7 @@ resource "cloudflare_dns_record" "api_dns" {
 
   zone_id = var.cloudflare_zone_id
   name    = each.value.api_subdomain
-  content   = oci_core_instance.budgeteer[each.key].public_ip
+  content   = oci_core_instance.vm[each.key].public_ip
   type    = "A"
   ttl     = 300
   comment = "Managed by Terraform"

@@ -9,6 +9,13 @@ terraform {
       version = "~> 5"
     }
   }
+
+  backend "oci" {
+    bucket          = "terraform-state"
+    namespace       = "axtuta2rk2uc"
+    region          = "eu-stockholm-1"
+    key             = "compute.tfstate"
+  }
 }
 
 provider "oci" {
