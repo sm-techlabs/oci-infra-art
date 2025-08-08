@@ -68,7 +68,7 @@ runcmd:
 
   # Replace the frontend config with the correct API URL
   - API_BASE_URL='https://${api_subdomain}.${domain}'
-  - sed -i '' -E "s|(API_BASE_URL[[:space:]]*:[[:space:]]*\")[^\"]*(\")|\1$${API_BASE_URL}\2|" index.html
+  - sed -i -E "s|(API_BASE_URL[[:space:]]*:[[:space:]]*\")[^\"]*(\")|\1https://$${API_BASE_URL}\2|" /opt/doodlebox/frontend/index.html
 
   # Set permissions (directories: 755, files: 644)
   - find /opt/doodlebox -type d -exec chmod 755 {} \;
