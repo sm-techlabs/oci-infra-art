@@ -62,3 +62,4 @@ jobs:
             -var 'compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}' \
             -var 'cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID }}' \
             -var 'cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN }}' \
+            -var 'doodlebox_github_app_private_key=${{ secrets.DOODLEBOX_GITHUB_APP_PRIVATE_KEY }}' \

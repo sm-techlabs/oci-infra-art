@@ -1,0 +1,41 @@
+name: Deploy Ephemeral Infrastructure
+run-name: ${{ github.event.client_payload.custom_string }} - Deploy Ephemeral Infrastructure
+
+on:
+  repository_dispatch:
+    types: [deploy-ephemeral-infra]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up OCI
+        uses: sm-techlabs/github-actions-toolkit/actions/connect-to-oci@v1
+        with:
+          oci-config-file: ${{ secrets.OCI_CONFIG }}
+          oci-private-key: ${{ secrets.OCI_API_KEY }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Deploy Compute
+        run: |
+          # Ensure the subnet ID is available
+          cd $GITHUB_WORKSPACE/terraform/networking
+          terraform init
+          export "TF_VAR_subnet_id=$(terraform output -raw subnet_id)"
+
+          cd $GITHUB_WORKSPACE/terraform/compute
+          terraform init
+
+          terraform ${{ github.event.client_payload.action }} --auto-approve \
+            -var 'compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}' \
+            -var 'cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID }}' \
+            -var 'cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN }}' \
+            -var 'doodlebox_github_app_private_key=${{ secrets.DOODLEBOX_GITHUB_APP_PRIVATE_KEY }}' \
+            -var 'custom_string=${{ github.event.client_payload.custom_string }}' 
