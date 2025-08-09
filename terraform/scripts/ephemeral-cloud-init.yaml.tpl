@@ -1,4 +1,5 @@
 #cloud-config
+---
 package_update: true
 package_upgrade: true
 
@@ -47,6 +48,10 @@ write_files:
       https://${api_subdomain}.${domain} {
           reverse_proxy localhost:3000
       }
+  - path: /opt/keys/encoded-private-key.pem
+    permissions: '0644'
+    content: |
+      ${doodlebox_github_app_private_key}
 runcmd:
   # Allow new incoming TCP connections on port 80 (HTTP)
   - iptables -I INPUT 5 -p tcp --dport 80 -m conntrack --ctstate NEW -j ACCEPT
@@ -54,8 +59,12 @@ runcmd:
   - iptables -I INPUT 6 -p tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT
 
   # Install Caddy
-  - curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-  - curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/deb.debian.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
+  - >
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key'
+    | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  - >
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/deb.debian.txt'
+    | tee /etc/apt/sources.list.d/caddy-stable.list
   - apt-get update
   - apt-get install -y -o Dpkg::Options::="--force-confold" caddy
 
@@ -63,14 +72,15 @@ runcmd:
   - git clone --depth 1 https://github.com/sm-techlabs/doodlebox /opt/doodlebox
 
   # Decode the private key and save it
-  - mkdir -p /opt/keys
-  - echo ${doodlebox_github_app_private_key} > /opt/keys/encoded-private-key.pem
   - base64 -d -i /opt/keys/encoded-private-key.pem > /opt/keys/doodlebox-dispatcher.private-key.pem
   - rm /opt/keys/encoded-private-key.pem
 
   # Replace the frontend config with the correct API URL
   - API_BASE_URL='https://${api_subdomain}.${domain}'
-  - sed -i -E "s|(API_BASE_URL[[:space:]]*:[[:space:]]*\")[^\"]*(\")|\1$${API_BASE_URL}\2|" /opt/doodlebox/frontend/index.html
+  - >
+    sed -i -E
+    "s|(API_BASE_URL[[:space:]]*:[[:space:]]*\")[^\"]*(\")|\1$${API_BASE_URL}\2|"
+    /opt/doodlebox/frontend/index.html
 
   # Set permissions (directories: 755, files: 644)
   - find /opt/doodlebox -type d -exec chmod 755 {} \;
