@@ -47,10 +47,6 @@ write_files:
       https://${api_subdomain}.${domain} {
           reverse_proxy localhost:3000
       }
-  - path: /opt/keys/doodlebox-dispatcher.private-key.pem
-    permissions: '0600'
-    content: |
-      {{ base64decode(doodlebox_github_app_private_key) }}
 runcmd:
   # Allow new incoming TCP connections on port 80 (HTTP)
   - iptables -I INPUT 5 -p tcp --dport 80 -m conntrack --ctstate NEW -j ACCEPT
@@ -66,6 +62,12 @@ runcmd:
   # Clone the source code (default branch: main)
   - git clone --depth 1 https://github.com/sm-techlabs/doodlebox /opt/doodlebox
 
+  # Decode the private key and save it
+  - mkdir -p /opt/keys
+  - echo ${doodlebox_github_app_private_key} > /opt/keys/encoded-private-key.pem
+  - base64 -d -i /opt/keys/encoded-private-key.pem > /opt/keys/doodlebox-dispatcher.private-key.pem
+  - rm /opt/keys/encoded-private-key.pem
+
   # Replace the frontend config with the correct API URL
   - API_BASE_URL='https://${api_subdomain}.${domain}'
   - sed -i -E "s|(API_BASE_URL[[:space:]]*:[[:space:]]*\")[^\"]*(\")|\1$${API_BASE_URL}\2|" /opt/doodlebox/frontend/index.html
@@ -73,7 +75,7 @@ runcmd:
   # Set permissions (directories: 755, files: 644)
   - find /opt/doodlebox -type d -exec chmod 755 {} \;
   - find /opt/doodlebox -type f -exec chmod 644 {} \;
-  - chown -R www-data:www-data /opt/doodlebox
+  - chown -R www-data:www-data /opt
 
   # Backend setup
   - cd /opt/doodlebox/backend
