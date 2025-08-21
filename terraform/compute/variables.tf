@@ -18,6 +18,16 @@ variable "vm_shape" {
   default = "VM.Standard.E2.1.Micro"
 }
 
+variable "block_volume_size_in_gbs" {
+  description = "Size of the block volume in GBs."
+  default     = 10
+}
+
+variable "block_volume_vpus_per_gb" {
+  description = "VPUs per GB for the block volume."
+  default     = 10
+}
+
 variable "instances" {
   type = map(object({
     display_name                     = string

@@ -87,6 +87,18 @@ runcmd:
   - find /opt/doodlebox -type f -exec chmod 644 {} \;
   - chown -R www-data:www-data /opt
 
+  # Format and mount the block volume
+  - |
+    for device in /dev/oracleoci/oraclevd*; do
+      if oci-iscsi-config -c "$device" | grep -q "unknown"; then
+        mkfs.ext4 "$device"
+        echo "$device /var/lib/caddy ext4 defaults,noatime,_netdev,nofail 0 2" >> /etc/fstab
+        break
+      fi
+    done
+  - mkdir -p /var/lib/caddy
+  - mount -a
+
   # Backend setup
   - cd /opt/doodlebox/backend
   - npm install --omit=dev
