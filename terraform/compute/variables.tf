@@ -20,7 +20,7 @@ variable "vm_shape" {
 
 variable "block_volume_size_in_gbs" {
   description = "Size of the block volume in GBs."
-  default     = 10
+  default     = 50
 }
 
 variable "block_volume_vpus_per_gb" {
