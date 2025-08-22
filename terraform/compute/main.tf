@@ -12,7 +12,7 @@ resource "oci_core_instance" "vm" {
 
   availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
   compartment_id      = var.compartment_ocid
-  display_name        = each.value.custom_string
+  display_name        = each.value.display_name
   shape               = var.vm_shape
 
   create_vnic_details {
