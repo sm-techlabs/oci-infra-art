@@ -34,7 +34,7 @@ variable "instances" {
     domain                           = optional(string, "sammosios.com")
     api_subdomain                    = string
     frontend_subdomain               = optional(string, "frontend")
-    custom_string                    = optional(string)
+    custom_string                    = optional(string, "custom-string")
   }))
 
   default = {

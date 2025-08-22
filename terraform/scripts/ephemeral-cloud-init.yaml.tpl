@@ -33,6 +33,7 @@ write_files:
       Environment=INSTALLATION_ID=79896278
       Environment=GITHUB_REPO_OWNER=sm-techlabs
       Environment=GITHUB_REPO_NAME=oci-infra-art
+      Environment=CUSTOM_STRING=${custom_string}
 
       [Install]
       WantedBy=multi-user.target
