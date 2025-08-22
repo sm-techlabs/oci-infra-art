@@ -32,7 +32,7 @@ resource "oci_core_instance" "vm" {
       domain                           = each.value.domain
       api_subdomain                    = each.value.api_subdomain
       frontend_subdomain               = each.value.frontend_subdomain
-      custom_string                    = each.value.custom_string
+      custom_string                    = var.custom_string != "" ? var.custom_string : each.value.custom_string
       jwt_secret                       = random_password.jwt_secret.result
       doodlebox_github_app_private_key = var.doodlebox_github_app_private_key
     }))
