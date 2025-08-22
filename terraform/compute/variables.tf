@@ -9,7 +9,6 @@ variable "doodlebox_github_app_private_key" {
 }
 variable "custom_string" {
   description = "A string set by the user used to customize the deployment."
-  default     = "custom-string"
 }
 variable "ubuntu_image_id" {
   default = "ocid1.image.oc1.eu-stockholm-1.aaaaaaaam6t7hfwppnu4ki6eej4kfytqfapcsrtuyu5r2rqybidhtr6k54ja"
@@ -34,7 +33,7 @@ variable "instances" {
     domain                           = optional(string, "sammosios.com")
     api_subdomain                    = string
     frontend_subdomain               = optional(string, "frontend")
-    custom_string                    = optional(string, "custom-string")
+    custom_string                    = optional(string, "instance-level-custom-string")
   }))
 
   default = {
